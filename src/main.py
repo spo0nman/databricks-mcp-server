@@ -9,7 +9,13 @@ import sys
 from typing import Optional
 
 from src.core.config import settings
-from src.server.mcp_server import DatabricksMCPServer, start_mcp_server
+from src.server.databricks_mcp_server import DatabricksMCPServer
+
+# Function to start the server - extracted from the server file
+async def start_mcp_server():
+    """Start the MCP server."""
+    server = DatabricksMCPServer()
+    await server.run_stdio_async()
 
 
 def setup_logging(log_level: Optional[str] = None):

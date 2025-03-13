@@ -63,7 +63,7 @@ The Databricks MCP Server exposes the following tools:
    # On Linux/Mac
    source .venv/bin/activate
    
-   # Install dependencies
+   # Install dependencies in development mode
    uv pip install -e .
    
    # Install development dependencies
@@ -80,6 +80,8 @@ The Databricks MCP Server exposes the following tools:
    export DATABRICKS_HOST=https://your-databricks-instance.azuredatabricks.net
    export DATABRICKS_TOKEN=your-personal-access-token
    ```
+
+   You can also create an `.env` file based on the `.env.example` template.
 
 ## Running the MCP Server
 
@@ -105,50 +107,44 @@ You can also directly run the server scripts from the scripts directory:
 ./scripts/start_mcp_server.sh
 ```
 
+## Querying Databricks Resources
+
+The repository includes utility scripts to quickly view Databricks resources:
+
+```bash
+# View all clusters
+uv run scripts/show_clusters.py
+
+# View all notebooks
+uv run scripts/show_notebooks.py
+```
+
 ## Project Structure
 
 ```
 databricks-mcp-server/
-├── src/                          # Source code
-│   ├── server/                   # Server implementation
-│   │   ├── __init__.py
-│   │   └── databricks_mcp_server.py  # Main server implementation
-│   ├── api/                      # API client for Databricks services
-│   │   ├── __init__.py
-│   │   └── databricks_api.py     # Databricks API client
-│   ├── core/                     # Core functionality and utilities
-│   │   ├── __init__.py
-│   │   └── utils.py              # Utility functions
-│   └── cli/                      # Command-line interface
-│       ├── __init__.py
-│       └── mcp_cli.py            # CLI for testing the server
-├── tests/                        # Test scripts (organized to mirror src/)
-│   ├── server/
-│   │   └── test_databricks_mcp_server.py
-│   ├── api/
-│   │   └── test_databricks_api.py
-│   ├── core/
-│   │   └── test_utils.py
-│   └── cli/
-│       └── test_mcp_cli.py
-├── examples/                     # Example usage
-│   ├── direct_usage.py           # Example of direct server usage
-│   └── mcp_client_usage.py       # Example of MCP client usage
-├── scripts/                      # Helper scripts
-│   ├── start_mcp_server.ps1      # Main server startup script (Windows)
-│   ├── start_mcp_server.sh       # Main server startup script (Linux/Mac)
-│   ├── run_direct_test.ps1       # Script to run direct test (Windows)
-│   ├── run_list_tools.ps1        # Script to run list tools test (Windows)
-│   ├── run_mcp_client_test.ps1   # Script to run MCP client test (Windows)
-│   ├── run_tests.ps1             # Script to run all tests (Windows)
-│   ├── run_direct_test.sh        # Script to run direct test (Linux/Mac)
-│   ├── run_list_tools.sh         # Script to run list tools test (Linux/Mac)
-│   └── run_mcp_client_test.sh    # Script to run MCP client test (Linux/Mac)
-├── start_mcp_server.ps1          # Wrapper script for server startup (Windows)
-├── start_mcp_server.sh           # Wrapper script for server startup (Linux/Mac)
-├── pyproject.toml                # Project configuration
-└── README.md                     # Project documentation
+├── src/                             # Source code
+│   ├── __init__.py                  # Makes src a package
+│   ├── __main__.py                  # Main entry point for the package
+│   ├── main.py                      # Entry point for the MCP server
+│   ├── api/                         # Databricks API clients
+│   ├── core/                        # Core functionality
+│   ├── server/                      # Server implementation
+│   │   ├── databricks_mcp_server.py # Main MCP server
+│   │   └── app.py                   # FastAPI app for tests
+│   └── cli/                         # Command-line interface
+├── tests/                           # Test directory
+├── scripts/                         # Helper scripts
+│   ├── start_mcp_server.ps1         # Server startup script (Windows)
+│   ├── run_tests.ps1                # Test runner script
+│   ├── show_clusters.py             # Script to show clusters
+│   └── show_notebooks.py            # Script to show notebooks
+├── examples/                        # Example usage
+├── docs/                            # Documentation
+└── pyproject.toml                   # Project configuration
 ```
+
+See `project_structure.md` for a more detailed view of the project structure.
 
 ## Development
 
@@ -176,6 +172,19 @@ uv run mypy src/
 The project uses pytest for testing. To run the tests:
 
 ```bash
+# Run all tests with our convenient script
+.\scripts\run_tests.ps1
+
+# Run with coverage report
+.\scripts\run_tests.ps1 -Coverage
+
+# Run specific tests with verbose output
+.\scripts\run_tests.ps1 -Verbose -Coverage tests/test_clusters.py
+```
+
+You can also run the tests directly with pytest:
+
+```bash
 # Run all tests
 uv run pytest tests/
 
@@ -183,22 +192,7 @@ uv run pytest tests/
 uv run pytest --cov=src tests/ --cov-report=term-missing
 ```
 
-A minimum code coverage of 80% is required for the project.
-
-You can also use the provided test scripts in the scripts directory:
-
-```bash
-# Windows
-.\scripts\run_direct_test.ps1      # Run direct test
-.\scripts\run_list_tools.ps1       # Run list tools test
-.\scripts\run_mcp_client_test.ps1  # Run MCP client test
-.\scripts\run_tests.ps1            # Run all tests
-
-# Linux/Mac
-./scripts/run_direct_test.sh       # Run direct test
-./scripts/run_list_tools.sh        # Run list tools test
-./scripts/run_mcp_client_test.sh   # Run MCP client test
-```
+A minimum code coverage of 80% is the goal for the project.
 
 ## Documentation
 

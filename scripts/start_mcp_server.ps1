@@ -1,6 +1,10 @@
 #!/usr/bin/env pwsh
 # Start script for the Databricks MCP server
 
+param(
+    [switch]$SkipPrompt
+)
+
 # Check if the virtual environment exists
 if (-not (Test-Path -Path ".venv")) {
     Write-Host "Virtual environment not found. Please create it first:"
@@ -16,9 +20,15 @@ if (-not (Get-Item -Path Env:DATABRICKS_HOST -ErrorAction SilentlyContinue) -or
     -not (Get-Item -Path Env:DATABRICKS_TOKEN -ErrorAction SilentlyContinue)) {
     Write-Host "Warning: DATABRICKS_HOST and/or DATABRICKS_TOKEN environment variables are not set."
     Write-Host "You can set them now or the server will look for them in other sources."
-    $continue = Read-Host "Do you want to continue? (y/n)"
-    if ($continue -ne "y") {
-        exit 1
+    
+    # Skip prompt when called from tests
+    if ($SkipPrompt) {
+        Write-Host "Auto-continuing due to SkipPrompt flag..."
+    } else {
+        $continue = Read-Host "Do you want to continue? (y/n)"
+        if ($continue -ne "y") {
+            exit 1
+        }
     }
 }
 
@@ -28,6 +38,14 @@ if (Get-Item -Path Env:DATABRICKS_HOST -ErrorAction SilentlyContinue) {
     Write-Host "Databricks Host: $env:DATABRICKS_HOST"
 }
 
-uv run src.server.databricks_mcp_server
+# Try to run the module using python -m
+Write-Host "Attempting to start server using module path..."
+python -m src.main
+
+# If the above fails, fallback to direct script execution
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Module execution failed, trying direct script execution..."
+    python "$PSScriptRoot\..\src\main.py"
+}
 
 Write-Host "Server stopped at $(Get-Date)" 
