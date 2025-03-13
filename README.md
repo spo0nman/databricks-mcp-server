@@ -48,7 +48,7 @@ The Databricks MCP Server exposes the following tools:
 
 2. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/databricks-mcp-server.git
+   git clone https://github.com/JustTryAI/databricks-mcp-server.git
    cd databricks-mcp-server
    ```
 
