@@ -1,8 +1,15 @@
 #!/usr/bin/env pwsh
 # PowerShell script to run the MCP server test
 
+# Check if the virtual environment exists
+if (-not (Test-Path -Path ".venv")) {
+    Write-Host "Virtual environment not found. Please create it first:"
+    Write-Host "uv venv"
+    exit 1
+}
+
 # Activate virtual environment
-. .\databricks-mcp\Scripts\Activate.ps1
+. .\.venv\Scripts\Activate.ps1
 
 # Ensure no MCP servers are already running
 $serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
@@ -16,7 +23,7 @@ if ($serverProcesses) {
 
 # Run the test 
 Write-Host "Running MCP server tests..."
-python test_mcp_server.py
+uv run test_mcp_server.py
 
 # When done, clean up any leftover processes
 $serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }

@@ -54,9 +54,6 @@ The Databricks MCP Server exposes the following tools:
 
 3. Set up the project with `uv`:
    ```bash
-   # Initialize the project
-   uv init
-   
    # Create and activate virtual environment
    uv venv
    
@@ -67,7 +64,10 @@ The Databricks MCP Server exposes the following tools:
    source .venv/bin/activate
    
    # Install dependencies
-   uv add "mcp[cli]>=1.2.0" httpx databricks-sdk
+   uv pip install -e .
+   
+   # Install development dependencies
+   uv pip install -e ".[dev]"
    ```
 
 4. Set up environment variables:
@@ -93,7 +93,17 @@ To start the MCP server, run:
 ./start_mcp_server.sh
 ```
 
-The server will start and be ready to accept MCP protocol connections.
+These wrapper scripts will execute the actual server scripts located in the `scripts` directory. The server will start and be ready to accept MCP protocol connections.
+
+You can also directly run the server scripts from the scripts directory:
+
+```bash
+# Windows
+.\scripts\start_mcp_server.ps1
+
+# Linux/Mac
+./scripts/start_mcp_server.sh
+```
 
 ## Project Structure
 
@@ -103,55 +113,117 @@ databricks-mcp-server/
 │   ├── server/                   # Server implementation
 │   │   ├── __init__.py
 │   │   └── databricks_mcp_server.py  # Main server implementation
-│   ├── client/                   # Client utilities
+│   ├── api/                      # API client for Databricks services
 │   │   ├── __init__.py
-│   │   └── databricks_client.py  # Databricks API client
+│   │   └── databricks_api.py     # Databricks API client
+│   ├── core/                     # Core functionality and utilities
+│   │   ├── __init__.py
+│   │   └── utils.py              # Utility functions
 │   └── cli/                      # Command-line interface
 │       ├── __init__.py
 │       └── mcp_cli.py            # CLI for testing the server
-├── tests/                        # Test scripts
-│   ├── __init__.py
-│   ├── direct_test.py            # Direct test of server functionality
-│   ├── mcp_client_test.py        # Test using MCP client
-│   └── list_tools_test.py        # Test to list available tools
+├── tests/                        # Test scripts (organized to mirror src/)
+│   ├── server/
+│   │   └── test_databricks_mcp_server.py
+│   ├── api/
+│   │   └── test_databricks_api.py
+│   ├── core/
+│   │   └── test_utils.py
+│   └── cli/
+│       └── test_mcp_cli.py
 ├── examples/                     # Example usage
 │   ├── direct_usage.py           # Example of direct server usage
 │   └── mcp_client_usage.py       # Example of MCP client usage
+├── scripts/                      # Helper scripts
+│   ├── start_mcp_server.ps1      # Main server startup script (Windows)
+│   ├── start_mcp_server.sh       # Main server startup script (Linux/Mac)
+│   ├── run_direct_test.ps1       # Script to run direct test (Windows)
+│   ├── run_list_tools.ps1        # Script to run list tools test (Windows)
+│   ├── run_mcp_client_test.ps1   # Script to run MCP client test (Windows)
+│   ├── run_tests.ps1             # Script to run all tests (Windows)
+│   ├── run_direct_test.sh        # Script to run direct test (Linux/Mac)
+│   ├── run_list_tools.sh         # Script to run list tools test (Linux/Mac)
+│   └── run_mcp_client_test.sh    # Script to run MCP client test (Linux/Mac)
+├── start_mcp_server.ps1          # Wrapper script for server startup (Windows)
+├── start_mcp_server.sh           # Wrapper script for server startup (Linux/Mac)
 ├── pyproject.toml                # Project configuration
-├── start_mcp_server.ps1          # PowerShell script to start the server (Windows)
-├── start_mcp_server.sh           # Shell script to start the server (Linux/Mac)
-├── run_direct_test.ps1           # Script to run direct test
-├── run_list_tools.ps1            # Script to run list tools test
-├── run_mcp_client_test.ps1       # Script to run MCP client test
 └── README.md                     # Project documentation
 ```
 
-## Examples
+## Development
 
-Check the `examples/` directory for usage examples:
+### Code Standards
 
-- `direct_usage.py`: Example of direct usage of the server without MCP protocol
-- `mcp_client_usage.py`: Example of using MCP client to interact with the server
+- Python code follows PEP 8 style guide with a maximum line length of 100 characters
+- Use 4 spaces for indentation (no tabs)
+- Use double quotes for strings
+- All classes, methods, and functions should have Google-style docstrings
+- Type hints are required for all code except tests
+
+### Linting
+
+The project uses the following linting tools:
+
+```bash
+# Run all linters
+uv run pylint src/ tests/
+uv run flake8 src/ tests/
+uv run mypy src/
+```
 
 ## Testing
 
-To run tests, use the provided scripts:
+The project uses pytest for testing. To run the tests:
+
+```bash
+# Run all tests
+uv run pytest tests/
+
+# Run with coverage report
+uv run pytest --cov=src tests/ --cov-report=term-missing
+```
+
+A minimum code coverage of 80% is required for the project.
+
+You can also use the provided test scripts in the scripts directory:
 
 ```bash
 # Windows
-.\run_direct_test.ps1        # Run direct test
-.\run_list_tools.ps1         # Run list tools test
-.\run_mcp_client_test.ps1    # Run MCP client test
+.\scripts\run_direct_test.ps1      # Run direct test
+.\scripts\run_list_tools.ps1       # Run list tools test
+.\scripts\run_mcp_client_test.ps1  # Run MCP client test
+.\scripts\run_tests.ps1            # Run all tests
 
 # Linux/Mac
-./run_direct_test.sh         # Run direct test
-./run_list_tools.sh          # Run list tools test
-./run_mcp_client_test.sh     # Run MCP client test
+./scripts/run_direct_test.sh       # Run direct test
+./scripts/run_list_tools.sh        # Run list tools test
+./scripts/run_mcp_client_test.sh   # Run MCP client test
+```
+
+## Documentation
+
+- API documentation is generated using Sphinx and can be found in the `docs/api` directory
+- All code includes Google-style docstrings
+- See the `examples/` directory for usage examples
+
+## Examples
+
+Check the `examples/` directory for usage examples. To run examples:
+
+```bash
+# Run example scripts with uv
+uv run examples/direct_usage.py
+uv run examples/mcp_client_usage.py
 ```
 
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Ensure your code follows the project's coding standards
+2. Add tests for any new functionality
+3. Update documentation as necessary
+4. Verify all tests pass before submitting
 
 ## License
 

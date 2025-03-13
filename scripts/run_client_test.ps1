@@ -1,8 +1,15 @@
 #!/usr/bin/env pwsh
 # PowerShell script to run the MCP client test
 
+# Check if the virtual environment exists
+if (-not (Test-Path -Path ".venv")) {
+    Write-Host "Virtual environment not found. Please create it first:"
+    Write-Host "uv venv"
+    exit 1
+}
+
 # Activate virtual environment
-. .\databricks-mcp\Scripts\Activate.ps1
+. .\.venv\Scripts\Activate.ps1
 
 # Make sure there are no existing MCP server processes
 $serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
@@ -21,7 +28,7 @@ $timeout = 60
 Write-Host "Running MCP client test with a $timeout second timeout..."
 $job = Start-Job -ScriptBlock { 
     cd $using:PWD
-    .\databricks-mcp\Scripts\python.exe mcp_client_test.py 
+    uv run mcp_client_test.py 
 }
 
 # Monitor the job and output in real-time

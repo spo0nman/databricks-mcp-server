@@ -1,11 +1,18 @@
 #!/usr/bin/env pwsh
 # PowerShell script to run the simple tool lister
 
+# Check if virtual environment exists
+if (-not (Test-Path -Path ".venv")) {
+    Write-Host "Virtual environment not found. Please create it first:"
+    Write-Host "uv venv"
+    exit 1
+}
+
 # Activate virtual environment
-. ..\databricks-mcp\Scripts\Activate.ps1
+. .\.venv\Scripts\Activate.ps1
 
 # Make sure there are no existing MCP server processes
-$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_server.ps1*" }
+$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
 if ($serverProcesses) {
     Write-Host "Found existing MCP server processes, stopping them first..."
     $serverProcesses | ForEach-Object { 
@@ -22,7 +29,7 @@ Write-Host "Running CLI tool listing with a $timeout second timeout..."
 $job = Start-Job -ScriptBlock { 
     cd $using:PWD
     cd ..
-    python -m src.cli.commands list-tools
+    uv run -m src.cli.commands list-tools
 }
 
 # Monitor the job and output in real-time
@@ -55,7 +62,7 @@ if ($output) {
 Remove-Job -Job $job -Force
 
 # Clean up any leftover processes
-$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_server.ps1*" }
+$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
 if ($serverProcesses) {
     Write-Host "Cleaning up any remaining MCP server processes..."
     $serverProcesses | ForEach-Object { 

@@ -1,11 +1,18 @@
 #!/usr/bin/env pwsh
 # PowerShell script to run all tests
 
+# Check if the virtual environment exists
+if (-not (Test-Path -Path ".venv")) {
+    Write-Host "Virtual environment not found. Please create it first:"
+    Write-Host "uv venv"
+    exit 1
+}
+
 # Activate virtual environment
-. ..\databricks-mcp\Scripts\Activate.ps1
+. .\.venv\Scripts\Activate.ps1
 
 # Make sure there are no existing MCP server processes
-$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_server.ps1*" }
+$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
 if ($serverProcesses) {
     Write-Host "Found existing MCP server processes, stopping them first..."
     $serverProcesses | ForEach-Object { 
@@ -25,7 +32,7 @@ Write-Host "Running direct tests..."
 $job = Start-Job -ScriptBlock { 
     cd $using:PWD
     cd ..
-    python -m tests.test_direct
+    uv run -m tests.test_direct
 }
 
 # Monitor the job and output in real-time
@@ -62,7 +69,7 @@ Write-Host "Running tool tests..."
 $job = Start-Job -ScriptBlock { 
     cd $using:PWD
     cd ..
-    python -m tests.test_tools
+    uv run -m tests.test_tools
 }
 
 # Monitor the job and output in real-time
@@ -99,7 +106,7 @@ Write-Host "Running MCP client tests..."
 $job = Start-Job -ScriptBlock { 
     cd $using:PWD
     cd ..
-    python -m tests.test_mcp_client
+    uv run -m tests.test_mcp_client
 }
 
 # Monitor the job and output in real-time
@@ -132,7 +139,7 @@ if ($output) {
 Remove-Job -Job $job -Force
 
 # Clean up any leftover processes
-$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_server.ps1*" }
+$serverProcesses = Get-Process -Name pwsh | Where-Object { $_.CommandLine -like "*start_mcp_server.ps1*" }
 if ($serverProcesses) {
     Write-Host "Cleaning up any remaining MCP server processes..."
     $serverProcesses | ForEach-Object { 
