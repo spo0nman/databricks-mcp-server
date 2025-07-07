@@ -55,10 +55,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Listing clusters with params: {params}")
             try:
                 result = await clusters.list_clusters()
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error listing clusters: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="create_cluster",
@@ -68,10 +68,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Creating cluster with params: {params}")
             try:
                 result = await clusters.create_cluster(params)
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error creating cluster: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="terminate_cluster",
@@ -81,10 +81,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Terminating cluster with params: {params}")
             try:
                 result = await clusters.terminate_cluster(params.get("cluster_id"))
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error terminating cluster: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="get_cluster",
@@ -94,10 +94,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Getting cluster info with params: {params}")
             try:
                 result = await clusters.get_cluster(params.get("cluster_id"))
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error getting cluster info: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="start_cluster",
@@ -107,10 +107,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Starting cluster with params: {params}")
             try:
                 result = await clusters.start_cluster(params.get("cluster_id"))
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error starting cluster: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         # Job management tools
         @self.tool(
@@ -121,10 +121,10 @@ class DatabricksMCPServer(FastMCP):
             logger.info(f"Listing jobs with params: {params}")
             try:
                 result = await jobs.list_jobs()
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error listing jobs: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="run_job",
@@ -135,24 +135,26 @@ class DatabricksMCPServer(FastMCP):
             try:
                 notebook_params = params.get("notebook_params", {})
                 result = await jobs.run_job(params.get("job_id"), notebook_params)
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error running job: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         # Notebook management tools
         @self.tool(
             name="list_notebooks",
-            description="List notebooks in a workspace directory with parameter: path (required)",
+            description="List notebooks in a workspace directory with parameter: path (optional, defaults to root '/')",
         )
         async def list_notebooks(params: Dict[str, Any]) -> List[TextContent]:
             logger.info(f"Listing notebooks with params: {params}")
             try:
-                result = await notebooks.list_notebooks(params.get("path"))
-                return [{"text": json.dumps(result)}]
+                # Use root path as default if no path is provided
+                path = params.get("path", "/")
+                result = await notebooks.list_notebooks(path)
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error listing notebooks: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         @self.tool(
             name="export_notebook",
@@ -170,24 +172,26 @@ class DatabricksMCPServer(FastMCP):
                     summary = f"{content[:1000]}... [content truncated, total length: {len(content)} characters]"
                     result["content"] = summary
                 
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error exporting notebook: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         # DBFS tools
         @self.tool(
             name="list_files",
-            description="List files and directories in a DBFS path with parameter: dbfs_path (required)",
+            description="List files and directories in a DBFS path with parameter: dbfs_path (optional, defaults to root '/')",
         )
         async def list_files(params: Dict[str, Any]) -> List[TextContent]:
             logger.info(f"Listing files with params: {params}")
             try:
-                result = await dbfs.list_files(params.get("dbfs_path"))
-                return [{"text": json.dumps(result)}]
+                # Use root path as default if no dbfs_path is provided
+                dbfs_path = params.get("dbfs_path", "/")
+                result = await dbfs.list_files(dbfs_path)
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error listing files: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
         
         # SQL tools
         @self.tool(
@@ -203,10 +207,10 @@ class DatabricksMCPServer(FastMCP):
                 schema = params.get("schema")
                 
                 result = await sql.execute_sql(statement, warehouse_id, catalog, schema)
-                return [{"text": json.dumps(result)}]
+                return [{"type": "text", "text": json.dumps(result)}]
             except Exception as e:
                 logger.error(f"Error executing SQL: {str(e)}")
-                return [{"text": json.dumps({"error": str(e)})}]
+                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
 
 
 async def main():
