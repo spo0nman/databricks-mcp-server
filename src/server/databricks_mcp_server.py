@@ -42,127 +42,153 @@ class DatabricksMCPServer(FastMCP):
         self._register_tools()
     
     def _register_tools(self):
-        """Register all Databricks MCP tools."""
+        """Register all Databricks MCP tools with proper type annotations."""
         
         # Cluster management tools
         @self.tool(
             name="list_clusters",
             description="List all Databricks clusters. Use this to see available clusters in your workspace."
         )
-        async def list_clusters(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing clusters with params: {params}")
+        async def list_clusters() -> str:
+            """List all clusters in the Databricks workspace."""
+            logger.info("Listing clusters")
             try:
                 result = await clusters.list_clusters()
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error listing clusters: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="create_cluster",
-            description="Create a new Databricks cluster. Requires cluster configuration parameters like cluster_name, spark_version, and node_type_id."
+            description="Create a new Databricks cluster with specified configuration."
         )
-        async def create_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Creating cluster with params: {params}")
+        async def create_cluster(
+            cluster_name: str,
+            spark_version: str,
+            node_type_id: str,
+            num_workers: int = 1,
+            cluster_log_conf: Optional[Dict[str, Any]] = None,
+            enable_elastic_disk: bool = True
+        ) -> str:
+            """Create a new Databricks cluster."""
+            logger.info(f"Creating cluster: {cluster_name}")
             try:
-                result = await clusters.create_cluster(params)
-                return [{"type": "text", "text": json.dumps(result)}]
+                cluster_config = {
+                    "cluster_name": cluster_name,
+                    "spark_version": spark_version,
+                    "node_type_id": node_type_id,
+                    "num_workers": num_workers,
+                    "enable_elastic_disk": enable_elastic_disk
+                }
+                if cluster_log_conf:
+                    cluster_config["cluster_log_conf"] = cluster_log_conf
+                    
+                result = await clusters.create_cluster(cluster_config)
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error creating cluster: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="terminate_cluster",
-            description="Terminate a Databricks cluster. Requires cluster_id parameter."
+            description="Terminate a specific Databricks cluster."
         )
-        async def terminate_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Terminating cluster with params: {params}")
+        async def terminate_cluster(cluster_id: str) -> str:
+            """Terminate a Databricks cluster by ID."""
+            logger.info(f"Terminating cluster: {cluster_id}")
             try:
-                result = await clusters.terminate_cluster(params.get("cluster_id"))
-                return [{"type": "text", "text": json.dumps(result)}]
+                result = await clusters.terminate_cluster(cluster_id)
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error terminating cluster: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="get_cluster",
-            description="Get details of a specific Databricks cluster. Requires cluster_id parameter."
+            description="Get detailed information about a specific Databricks cluster."
         )
-        async def get_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Getting cluster info with params: {params}")
+        async def get_cluster(cluster_id: str) -> str:
+            """Get details of a specific cluster."""
+            logger.info(f"Getting cluster info: {cluster_id}")
             try:
-                result = await clusters.get_cluster(params.get("cluster_id"))
-                return [{"type": "text", "text": json.dumps(result)}]
+                result = await clusters.get_cluster(cluster_id)
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error getting cluster info: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="start_cluster",
-            description="Start a Databricks cluster. Requires cluster_id parameter."
+            description="Start a stopped Databricks cluster."
         )
-        async def start_cluster(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Starting cluster with params: {params}")
+        async def start_cluster(cluster_id: str) -> str:
+            """Start a Databricks cluster by ID."""
+            logger.info(f"Starting cluster: {cluster_id}")
             try:
-                result = await clusters.start_cluster(params.get("cluster_id"))
-                return [{"type": "text", "text": json.dumps(result)}]
+                result = await clusters.start_cluster(cluster_id)
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error starting cluster: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         # Job management tools
         @self.tool(
             name="list_jobs",
             description="List all Databricks jobs. Use this to see available jobs in your workspace."
         )
-        async def list_jobs(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing jobs with params: {params}")
+        async def list_jobs() -> str:
+            """List all jobs in the Databricks workspace."""
+            logger.info("Listing jobs")
             try:
                 result = await jobs.list_jobs()
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error listing jobs: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="run_job",
-            description="Run a Databricks job. Requires job_id parameter, optional notebook_params for job parameters."
+            description="Run a Databricks job with optional parameters."
         )
-        async def run_job(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Running job with params: {params}")
+        async def run_job(job_id: str, notebook_params: Optional[Dict[str, str]] = None) -> str:
+            """Run a Databricks job by ID with optional notebook parameters."""
+            logger.info(f"Running job: {job_id}")
             try:
-                notebook_params = params.get("notebook_params", {})
-                result = await jobs.run_job(params.get("job_id"), notebook_params)
-                return [{"type": "text", "text": json.dumps(result)}]
+                params = notebook_params or {}
+                result = await jobs.run_job(job_id, params)
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error running job: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         # Notebook management tools
         @self.tool(
             name="list_notebooks",
-            description="List notebooks in a workspace directory. Optional path parameter (defaults to root '/' if not provided)."
+            description="List notebooks in a workspace directory."
         )
-        async def list_notebooks(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing notebooks with params: {params}")
+        async def list_notebooks(path: str = "/") -> str:
+            """List notebooks in the specified workspace directory."""
+            logger.info(f"Listing notebooks in path: {path}")
             try:
-                # Use root path as default if no path is provided
-                path = params.get("path", "/")
                 result = await notebooks.list_notebooks(path)
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error listing notebooks: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         @self.tool(
             name="export_notebook",
-            description="Export a notebook from the workspace. Requires path parameter, optional format parameter (JUPYTER, DBC, SOURCE, HTML)."
+            description="Export a notebook from the workspace in the specified format."
         )
-        async def export_notebook(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Exporting notebook with params: {params}")
+        async def export_notebook(
+            path: str, 
+            format: str = "JUPYTER"
+        ) -> str:
+            """Export a notebook from the workspace."""
+            logger.info(f"Exporting notebook: {path} in format: {format}")
             try:
-                format_type = params.get("format", "JUPYTER")
-                result = await notebooks.export_notebook(params.get("path"), format_type)
+                result = await notebooks.export_notebook(path, format)
                 
                 # For notebooks, we might want to trim the response for readability
                 content = result.get("content", "")
@@ -170,45 +196,45 @@ class DatabricksMCPServer(FastMCP):
                     summary = f"{content[:1000]}... [content truncated, total length: {len(content)} characters]"
                     result["content"] = summary
                 
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error exporting notebook: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         # DBFS tools
         @self.tool(
             name="list_files",
-            description="List files and directories in DBFS. Optional dbfs_path parameter (defaults to root '/' if not provided)."
+            description="List files and directories in DBFS (Databricks File System)."
         )
-        async def list_files(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Listing files with params: {params}")
+        async def list_files(dbfs_path: str = "/") -> str:
+            """List files and directories in the specified DBFS path."""
+            logger.info(f"Listing files in DBFS path: {dbfs_path}")
             try:
-                # Use root path as default if no dbfs_path is provided
-                dbfs_path = params.get("dbfs_path", "/")
                 result = await dbfs.list_files(dbfs_path)
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error listing files: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
         # SQL tools
         @self.tool(
             name="execute_sql",
-            description="Execute a SQL statement. Requires statement and warehouse_id parameters, optional catalog and schema parameters."
+            description="Execute a SQL statement in Databricks SQL warehouse."
         )
-        async def execute_sql(params: Dict[str, Any]) -> List[TextContent]:
-            logger.info(f"Executing SQL with params: {params}")
+        async def execute_sql(
+            statement: str,
+            warehouse_id: str,
+            catalog: Optional[str] = None,
+            schema: Optional[str] = None
+        ) -> str:
+            """Execute a SQL statement in the specified warehouse."""
+            logger.info(f"Executing SQL: {statement[:100]}...")
             try:
-                statement = params.get("statement")
-                warehouse_id = params.get("warehouse_id")
-                catalog = params.get("catalog")
-                schema = params.get("schema")
-                
                 result = await sql.execute_sql(statement, warehouse_id, catalog, schema)
-                return [{"type": "text", "text": json.dumps(result)}]
+                return json.dumps(result)
             except Exception as e:
                 logger.error(f"Error executing SQL: {str(e)}")
-                return [{"type": "text", "text": json.dumps({"error": str(e)})}]
+                return json.dumps({"error": str(e)})
 
 async def main():
     """Main entry point for the MCP server."""
