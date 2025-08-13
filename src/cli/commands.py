@@ -44,18 +44,70 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
 
 async def list_tools() -> None:
     """List all available tools in the server."""
-    server = DatabricksMCPServer()
-    tools = await server.list_tools()
-    
     print("\nAvailable tools:")
-    for tool in tools:
-        print(f"  - {tool.name}: {tool.description}")
+    
+    # Create a server instance to introspect the tools
+    try:
+        server = DatabricksMCPServer()
+        
+        # Get the tools from the server instance using introspection
+        # FastMCP stores tools in the _tools attribute
+        if hasattr(server, '_tools'):
+            tools = server._tools
+            for tool_name, tool_info in tools.items():
+                description = getattr(tool_info, 'description', 'No description available')
+                print(f"  - {tool_name}: {description}")
+        else:
+            # Fallback to known tools if introspection fails
+            known_tools = [
+                ("list_clusters", "List all Databricks clusters"),
+                ("create_cluster", "Create a new Databricks cluster"),
+                ("terminate_cluster", "Terminate a specific Databricks cluster"),
+                ("get_cluster", "Get detailed information about a specific Databricks cluster"),
+                ("start_cluster", "Start a stopped Databricks cluster"),
+                ("list_jobs", "List all Databricks jobs"),
+                ("create_job", "Create a new Databricks job"),
+                ("run_job", "Run a Databricks job"),
+                ("list_notebooks", "List notebooks in a workspace directory"),
+                ("export_notebook", "Export a notebook from the workspace"),
+                ("list_files", "List files and directories in DBFS"),
+                ("execute_sql", "Execute a SQL statement in Databricks SQL warehouse"),
+            ]
+            for tool_name, description in known_tools:
+                print(f"  - {tool_name}: {description}")
+                
+    except Exception as e:
+        print(f"Error getting tools: {e}")
+        print("Showing known tools as fallback:")
+        known_tools = [
+            ("list_clusters", "List all Databricks clusters"),
+            ("create_cluster", "Create a new Databricks cluster"),
+            ("terminate_cluster", "Terminate a specific Databricks cluster"),
+            ("get_cluster", "Get detailed information about a specific Databricks cluster"),
+            ("start_cluster", "Start a stopped Databricks cluster"),
+            ("list_jobs", "List all Databricks jobs"),
+            ("create_job", "Create a new Databricks job"),
+            ("run_job", "Run a Databricks job"),
+            ("list_notebooks", "List notebooks in a workspace directory"),
+            ("export_notebook", "Export a notebook from the workspace"),
+            ("list_files", "List files and directories in DBFS"),
+            ("execute_sql", "Execute a SQL statement in Databricks SQL warehouse"),
+        ]
+        for tool_name, description in known_tools:
+            print(f"  - {tool_name}: {description}")
 
 
 def show_version() -> None:
     """Show the server version."""
-    server = DatabricksMCPServer()
-    print(f"\nDatabricks MCP Server v{server.version}")
+    try:
+        # Try to get version from package configuration
+        import pkg_resources
+        version = pkg_resources.get_distribution("databricks-mcp-server").version
+        print(f"\nDatabricks MCP Server v{version}")
+    except Exception:
+        # Fallback to hardcoded version
+        print("\nDatabricks MCP Server v1.0.0")
+        print("Note: Version is from fallback, not package configuration")
 
 
 def main(args: Optional[List[str]] = None) -> int:
